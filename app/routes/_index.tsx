@@ -20,7 +20,7 @@ export default function Index() {
                         Discover highly-rated crowdfunding projects
                     </p>
                 </div>
-                <div className="rounded-xl shadow-xl">
+                <div className="rounded-xl shadow-xl bg-white">
                     <KickstarterTable />
                 </div>
             </div>
