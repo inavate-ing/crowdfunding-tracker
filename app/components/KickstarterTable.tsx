@@ -42,6 +42,17 @@ const KickstarterTable = () => {
         return segments;
     };
 
+    // Memoize all segments for current page data
+    const segmentsMap = useMemo(() => {
+        return currentData.reduce(
+            (acc, project) => {
+                acc[project['s.no']] = getProgressSegments(project['percentage.funded']);
+                return acc;
+            },
+            {} as Record<number, Array<{ width: number; color: string }>>
+        );
+    }, [currentData]);
+
     return (
         <div className="space-y-6">
             <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
@@ -60,55 +71,46 @@ const KickstarterTable = () => {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {currentData.map(project => {
-                            const segments = useMemo(
-                                () => getProgressSegments(project['percentage.funded']),
-                                [project['percentage.funded']]
-                            );
-
-                            return (
-                                <TableRow
-                                    key={project['s.no']}
-                                    className="bg-white border-b hover:bg-gray-50"
-                                >
-                                    <TableCell className="px-6 py-4 text-gray-900">
-                                        {project['s.no']}
-                                    </TableCell>
-                                    <TableCell className="px-6 py-4 font-medium text-gray-900">
-                                        <div className="font-semibold">{project.title}</div>
-                                        <div className="text-sm text-gray-500">
-                                            {project.location}
+                        {currentData.map(project => (
+                            <TableRow
+                                key={project['s.no']}
+                                className="bg-white border-b hover:bg-gray-50"
+                            >
+                                <TableCell className="px-6 py-4 text-gray-900">
+                                    {project['s.no']}
+                                </TableCell>
+                                <TableCell className="px-6 py-4 font-medium text-gray-900">
+                                    <div className="font-semibold">{project.title}</div>
+                                    <div className="text-sm text-gray-500">{project.location}</div>
+                                </TableCell>
+                                <TableCell className="px-6 py-4 text-gray-600">
+                                    {project.by}
+                                </TableCell>
+                                <TableCell className="px-6 py-4">
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex w-full h-2.5 bg-gray-200 rounded-full overflow-hidden">
+                                            {segmentsMap[project['s.no']].map((segment, index) => (
+                                                <div
+                                                    key={index}
+                                                    className={`flex flex-col justify-center overflow-hidden ${segment.color} text-xs text-white text-center whitespace-nowrap`}
+                                                    style={{ width: `${segment.width}%` }}
+                                                    role="progressbar"
+                                                    aria-valuenow={segment.width}
+                                                    aria-valuemin={0}
+                                                    aria-valuemax={100}
+                                                />
+                                            ))}
                                         </div>
-                                    </TableCell>
-                                    <TableCell className="px-6 py-4 text-gray-600">
-                                        {project.by}
-                                    </TableCell>
-                                    <TableCell className="px-6 py-4">
-                                        <div className="flex items-center gap-2">
-                                            <div className="flex w-full h-2.5 bg-gray-200 rounded-full overflow-hidden">
-                                                {segments.map((segment, index) => (
-                                                    <div
-                                                        key={index}
-                                                        className={`flex flex-col justify-center overflow-hidden ${segment.color} text-xs text-white text-center whitespace-nowrap`}
-                                                        style={{ width: `${segment.width}%` }}
-                                                        role="progressbar"
-                                                        aria-valuenow={segment.width}
-                                                        aria-valuemin={0}
-                                                        aria-valuemax={100}
-                                                    />
-                                                ))}
-                                            </div>
-                                            <span className="text-gray-600 whitespace-nowrap">
-                                                {project['percentage.funded']}%
-                                            </span>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell className="px-6 py-4 text-right text-gray-900 font-medium">
-                                        ${project['amt.pledged']}
-                                    </TableCell>
-                                </TableRow>
-                            );
-                        })}
+                                        <span className="text-gray-600 whitespace-nowrap">
+                                            {project['percentage.funded']}%
+                                        </span>
+                                    </div>
+                                </TableCell>
+                                <TableCell className="px-6 py-4 text-right text-gray-900 font-medium">
+                                    ${project['amt.pledged']}
+                                </TableCell>
+                            </TableRow>
+                        ))}
                     </TableBody>
                 </Table>
             </div>
