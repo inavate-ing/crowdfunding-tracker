@@ -6,14 +6,44 @@ import {
     TableHeader,
     TableRow,
 } from '~/components/ui/table';
-import data from '~/components/data';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Project, projectsArraySchema } from '~/types/project';
 
 const ITEMS_PER_PAGE = 5;
+const API_URL =
+    'https://raw.githubusercontent.com/saaslabsco/frontend-assignment/refs/heads/master/frontend-assignment.json';
 
 const KickstarterTable = () => {
     const [currentPage, setCurrentPage] = useState(1);
+    const [data, setData] = useState<Project[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        (async () => {
+            try {
+                const response = await fetch(API_URL);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch data');
+                }
+                const jsonData = await response.json();
+
+                // Validate data with Zod
+                const validatedData = projectsArraySchema.safeParse(jsonData);
+
+                if (!validatedData.success) {
+                    throw new Error('Invalid data format received from API');
+                }
+
+                setData(validatedData.data);
+                setIsLoading(false);
+            } catch (err) {
+                setError(err instanceof Error ? err.message : 'An error occurred');
+                setIsLoading(false);
+            }
+        })();
+    }, []);
 
     const totalPages = Math.ceil(data.length / ITEMS_PER_PAGE);
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -44,14 +74,27 @@ const KickstarterTable = () => {
 
     // Memoize all segments for current page data
     const segmentsMap = useMemo(() => {
-        return currentData.reduce(
-            (acc, project) => {
-                acc[project['s.no']] = getProgressSegments(project['percentage.funded']);
-                return acc;
-            },
-            {} as Record<number, Array<{ width: number; color: string }>>
-        );
+        return currentData.reduce((acc, project) => {
+            acc[project['s.no']] = getProgressSegments(project['percentage.funded']);
+            return acc;
+        }, {} as Record<number, Array<{ width: number; color: string }>>);
     }, [currentData]);
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                <div className="text-red-600">Error: {error}</div>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
