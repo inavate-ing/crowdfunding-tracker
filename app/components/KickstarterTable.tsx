@@ -83,21 +83,35 @@ const KickstarterTable = () => {
         );
     }, [currentData]);
 
+    const handleKeyNavigation = (e: KeyboardEvent) => {
+        if (e.key === 'ArrowLeft' && currentPage > 1) {
+            setCurrentPage(page => Math.max(1, page - 1));
+        } else if (e.key === 'ArrowRight' && currentPage < totalPages) {
+            setCurrentPage(page => Math.min(totalPages, page + 1));
+        }
+    };
+
     if (isLoading) {
         return (
             <div className="flex items-center justify-center min-h-[400px]">
                 <div
                     className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"
                     role="status"
-                    aria-label="Loading"
-                />
+                    aria-label="Loading projects"
+                >
+                    <span className="sr-only">Loading projects...</span>
+                </div>
             </div>
         );
     }
 
     if (error) {
         return (
-            <div className="flex items-center justify-center min-h-[400px]">
+            <div
+                className="flex items-center justify-center min-h-[400px]"
+                role="alert"
+                aria-live="assertive"
+            >
                 <div className="text-red-600">Error: {error}</div>
             </div>
         );
@@ -106,16 +120,22 @@ const KickstarterTable = () => {
     return (
         <div className="space-y-6">
             <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
-                <Table>
+                <Table aria-label="Kickstarter Projects">
                     <TableHeader>
                         <TableRow className="text-xs text-gray-700 uppercase bg-gray-50">
-                            <TableHead className="px-6 py-3 font-semibold">S.No</TableHead>
-                            <TableHead className="px-6 py-3 font-semibold">Project</TableHead>
-                            <TableHead className="px-6 py-3 font-semibold">By</TableHead>
-                            <TableHead className="px-6 py-3 font-semibold min-w-80">
+                            <TableHead className="px-6 py-3 font-semibold" scope="col">
+                                S.No
+                            </TableHead>
+                            <TableHead className="px-6 py-3 font-semibold" scope="col">
+                                Project
+                            </TableHead>
+                            <TableHead className="px-6 py-3 font-semibold" scope="col">
+                                By
+                            </TableHead>
+                            <TableHead className="px-6 py-3 font-semibold min-w-80" scope="col">
                                 Progress
                             </TableHead>
-                            <TableHead className="px-6 py-3 font-semibold text-right">
+                            <TableHead className="px-6 py-3 font-semibold text-right" scope="col">
                                 Amount Pledged
                             </TableHead>
                         </TableRow>
@@ -138,7 +158,11 @@ const KickstarterTable = () => {
                                 </TableCell>
                                 <TableCell className="px-6 py-4">
                                     <div className="flex items-center gap-2">
-                                        <div className="flex w-full h-2.5 bg-gray-200 rounded-full overflow-hidden">
+                                        <div
+                                            className="flex w-full h-2.5 bg-gray-200 rounded-full overflow-hidden"
+                                            role="group"
+                                            aria-label={`Funding progress for ${project.title}`}
+                                        >
                                             {segmentsMap[project['s.no']].map((segment, index) => (
                                                 <div
                                                     key={index}
@@ -148,16 +172,20 @@ const KickstarterTable = () => {
                                                     aria-valuenow={segment.width}
                                                     aria-valuemin={0}
                                                     aria-valuemax={100}
+                                                    aria-label={`Progress segment ${index + 1}: ${segment.width}%`}
                                                 />
                                             ))}
                                         </div>
-                                        <span className="text-gray-600 whitespace-nowrap">
+                                        <span
+                                            className="text-gray-600 whitespace-nowrap"
+                                            aria-live="polite"
+                                        >
                                             {project['percentage.funded']}%
                                         </span>
                                     </div>
                                 </TableCell>
                                 <TableCell className="px-6 py-4 text-right text-gray-900 font-medium">
-                                    ${project['amt.pledged']}
+                                    ${project['amt.pledged'].toLocaleString()}
                                 </TableCell>
                             </TableRow>
                         ))}
@@ -165,34 +193,44 @@ const KickstarterTable = () => {
                 </Table>
             </div>
 
-            <div className="flex items-center justify-between px-4 pb-4">
-                <div className="text-sm text-gray-700">
+            <nav
+                className="flex items-center justify-between px-4 pb-4"
+                aria-label="Table navigation"
+                onKeyDown={handleKeyNavigation as any}
+            >
+                <div className="text-sm text-gray-700" aria-live="polite">
                     Showing <span className="font-medium">{startIndex + 1}</span> to{' '}
                     <span className="font-medium">{Math.min(endIndex, data.length)}</span> of{' '}
                     <span className="font-medium">{data.length}</span> results
                 </div>
-                <div className="flex items-center gap-2">
+                <div
+                    className="flex items-center gap-2"
+                    role="group"
+                    aria-label="Pagination controls"
+                >
                     <button
                         onClick={() => setCurrentPage(page => Math.max(1, page - 1))}
                         disabled={currentPage === 1}
                         className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        aria-label="Go to previous page"
                     >
-                        <ChevronLeft className="w-4 h-4 mr-1" />
+                        <ChevronLeft className="w-4 h-4 mr-1" aria-hidden="true" />
                         Previous
                     </button>
-                    <div className="text-sm text-gray-700">
+                    <div className="text-sm text-gray-700" aria-live="polite">
                         Page {currentPage} of {totalPages}
                     </div>
                     <button
                         onClick={() => setCurrentPage(page => Math.min(totalPages, page + 1))}
                         disabled={currentPage === totalPages}
                         className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        aria-label="Go to next page"
                     >
                         Next
-                        <ChevronRight className="w-4 h-4 ml-1" />
+                        <ChevronRight className="w-4 h-4 ml-1" aria-hidden="true" />
                     </button>
                 </div>
-            </div>
+            </nav>
         </div>
     );
 };
